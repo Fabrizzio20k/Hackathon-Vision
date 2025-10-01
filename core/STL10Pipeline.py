@@ -150,11 +150,6 @@ class STL10Pipeline:
         print("="*70)
         print("NOW using labels for evaluation ONLY")
 
-        test_vectors = np.sign(test_vectors) * \
-            np.power(np.abs(test_vectors), 0.5)
-        test_vectors = test_vectors / \
-            (np.linalg.norm(test_vectors, axis=1, keepdims=True) + 1e-10)
-
         if self.n_runs > 1:
             print(f"\nRunning {self.n_runs} experiments for repeatability...")
             rep_evaluator = RepeatabilityEvaluator(n_runs=self.n_runs)
