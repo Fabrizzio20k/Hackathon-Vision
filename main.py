@@ -1,6 +1,5 @@
-from config.InitialConfig import InitialConfig
+from core.STL10Pipeline import main
 
 
 if __name__ == "__main__":
-    config = InitialConfig(kaggle_json_path="./kaggle.json", data_path=".")
-    config.start()
+    main()

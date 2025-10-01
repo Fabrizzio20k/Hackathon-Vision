@@ -210,3 +210,5 @@ kaggle.json
 .DS_Store
 datasets
 stl10
+dataset
+models
