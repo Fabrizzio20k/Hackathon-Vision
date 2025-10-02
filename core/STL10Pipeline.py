@@ -60,7 +60,8 @@ class STL10Pipeline:
 
         elif self.descriptor_type == "regional_multi":
             print("Using RegionalMultiDescriptor (no training needed)")
-            self.descriptor = RegionalMultiDescriptor(grid_size=6)  # CAMBIO: 4 en vez de 8
+            self.descriptor = RegionalMultiDescriptor(
+                grid_size=6)  # CAMBIO: 4 en vez de 8
             descriptor_path = self.models_path / "descriptor_model.pkl"
             with open(descriptor_path, 'wb') as f:
                 pickle.dump(self.descriptor, f)
@@ -74,7 +75,8 @@ class STL10Pipeline:
             descriptor_path = self.models_path / "descriptor_model.pkl"
             self.descriptor.save(str(descriptor_path))
 
-        print(f"Descriptor dimension: {self.descriptor.get_feature_dimension()}")
+        print(
+            f"Descriptor dimension: {self.descriptor.get_feature_dimension()}")
 
     def step3_extract_features(self):
         print("\n" + "="*70)
@@ -152,7 +154,8 @@ class STL10Pipeline:
         print("="*70)
 
         dimension = train_vectors.shape[1]
-        print(f"Building {self.index_type.value} index with dimension {dimension}")
+        print(
+            f"Building {self.index_type.value} index with dimension {dimension}")
 
         self.faiss_db = FaissDatabase(
             dimension=dimension, index_type=self.index_type)
@@ -255,7 +258,8 @@ class STL10Pipeline:
         print("="*70)
         print(f"Configuration:")
         print(f"  - Descriptor: {self.descriptor_type}")
-        print(f"  - Vocabulary size: {self.n_clusters if self.descriptor_type == 'sift' else 'N/A'}")
+        print(
+            f"  - Vocabulary size: {self.n_clusters if self.descriptor_type == 'sift' else 'N/A'}")
         print(f"  - FAISS index: {self.index_type.value}")
         print(f"  - Classifier: {self.classifier}")
         print(f"  - Runs: {self.n_runs}")
@@ -305,7 +309,7 @@ def main():
                         help='Path to store dataset')
     parser.add_argument('--models_path', type=str, default='./models',
                         help='Path to store models')
-    parser.add_argument('--descriptor', type=str, default='hog',
+    parser.add_argument('--descriptor', type=str, default='regional_multi',
                         choices=['sift', 'hog', 'regional_multi'],
                         help='Descriptor type: sift, hog, or regional_multi')
     parser.add_argument('--n_clusters', type=int, default=1000,
