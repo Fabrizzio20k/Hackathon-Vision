@@ -26,3 +26,4 @@ six==1.17.0
 threadpoolctl==3.6.0
 tqdm==4.67.1
 urllib3==2.5.0
+scikit-image==0.25.2
