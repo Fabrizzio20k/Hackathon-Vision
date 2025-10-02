@@ -8,8 +8,9 @@ import pickle
 from config.InitialConfig import InitialConfig
 from utils.SIFTBoVW import SIFTBoVW
 from utils.FaissDatabase import FaissDatabase, IndexType
-from .ModelEvaluator import ModelEvaluator, RepeatabilityEvaluator
-from .RobustnessEvaluator import RobustnessEvaluator
+from utils.RegionalMultiDescriptor import RegionalMultiDescriptor
+from core.ModelEvaluator import ModelEvaluator, RepeatabilityEvaluator
+from core.RobustnessEvaluator import RobustnessEvaluator
 from utils.HogExtractor import HOGExtractor
 
 
@@ -57,6 +58,14 @@ class STL10Pipeline:
             with open(descriptor_path, 'wb') as f:
                 pickle.dump(self.descriptor, f)
 
+        elif self.descriptor_type == "regional_multi":
+            print("Using RegionalMultiDescriptor (no training needed)")
+            self.descriptor = RegionalMultiDescriptor(
+                grid_size=6)  # CAMBIO: 4 en vez de 8
+            descriptor_path = self.models_path / "descriptor_model.pkl"
+            with open(descriptor_path, 'wb') as f:
+                pickle.dump(self.descriptor, f)
+
         elif self.descriptor_type == "sift":
             print("Using SIFT BoVW - NO LABELS USED")
             unlabeled_images = self.config.load_unlabeled()
@@ -74,11 +83,14 @@ class STL10Pipeline:
         print("STEP 3: EXTRACT FEATURES")
         print("="*70)
 
+        descriptor_path = self.models_path / "descriptor_model.pkl"
         if self.descriptor is None:
-            descriptor_path = self.models_path / "descriptor_model.pkl"
             if self.descriptor_type == "sift":
                 self.descriptor = SIFTBoVW.load(str(descriptor_path))
             elif self.descriptor_type == "hog":
+                with open(descriptor_path, 'rb') as f:
+                    self.descriptor = pickle.load(f)
+            elif self.descriptor_type == "regional_multi":
                 with open(descriptor_path, 'rb') as f:
                     self.descriptor = pickle.load(f)
 
@@ -89,6 +101,10 @@ class STL10Pipeline:
             print("Encoding train images with HOG...")
             train_vectors = np.array(
                 [self.descriptor.extract(img) for img in train_images])
+        elif self.descriptor_type == "regional_multi":
+            print("Encoding train images with RegionalMulti...")
+            train_vectors = np.array(
+                [self.descriptor.extract(img) for img in train_images])
         else:
             train_vectors = self.descriptor.encode_images(train_images)
 
@@ -97,6 +113,10 @@ class STL10Pipeline:
 
         if self.descriptor_type == "hog":
             print("Encoding test images with HOG...")
+            test_vectors = np.array(
+                [self.descriptor.extract(img) for img in test_images])
+        elif self.descriptor_type == "regional_multi":
+            print("Encoding test images with RegionalMulti...")
             test_vectors = np.array(
                 [self.descriptor.extract(img) for img in test_images])
         else:
@@ -118,6 +138,8 @@ class STL10Pipeline:
         start_time = time.time()
         for i in range(n_samples):
             if self.descriptor_type == "hog":
+                _ = self.descriptor.extract(test_images[i])
+            elif self.descriptor_type == "regional_multi":
                 _ = self.descriptor.extract(test_images[i])
             else:
                 _ = self.descriptor.encode_image(test_images[i])
@@ -208,6 +230,9 @@ class STL10Pipeline:
         elif self.descriptor_type == "hog":
             with open(descriptor_path, 'rb') as f:
                 descriptor = pickle.load(f)
+        elif self.descriptor_type == "regional_multi":
+            with open(descriptor_path, 'rb') as f:
+                descriptor = pickle.load(f)
 
         classifier = ModelEvaluator.load(str(classifier_path))
 
@@ -284,9 +309,9 @@ def main():
                         help='Path to store dataset')
     parser.add_argument('--models_path', type=str, default='./models',
                         help='Path to store models')
-    parser.add_argument('--descriptor', type=str, default='hog',
-                        choices=['sift', 'hog', 'multi'],
-                        help='Descriptor type: sift, hog, or multi (sift+hog)')
+    parser.add_argument('--descriptor', type=str, default='regional_multi',
+                        choices=['sift', 'hog', 'regional_multi'],
+                        help='Descriptor type: sift, hog, or regional_multi')
     parser.add_argument('--n_clusters', type=int, default=1000,
                         help='Number of visual words (BoVW vocabulary size)')
     parser.add_argument('--index_type', type=str, default='flat_l2',
@@ -322,3 +347,7 @@ def main():
         skip_training=args.skip_training,
         skip_robustness=args.skip_robustness
     )
+
+
+if __name__ == "__main__":
+    main()

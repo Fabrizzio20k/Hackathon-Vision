@@ -37,11 +37,11 @@ class ModelEvaluator:
         elif model_type == "rbf_svm":
             return SVC(
                 kernel='rbf',
-                C=params.get('C', 1.0),
+                C=params.get('C', 10.0),  # Aumentar C de 1.0 a 100.0
                 gamma=params.get('gamma', 'scale'),
                 random_state=params.get('random_state', 42),
                 verbose=params.get('verbose', False)
-            )
+    )
 
         elif model_type == "knn":
             return KNeighborsClassifier(
