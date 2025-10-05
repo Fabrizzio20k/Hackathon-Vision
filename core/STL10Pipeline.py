@@ -75,6 +75,21 @@ class STL10Pipeline:
             descriptor_path = self.models_path / "descriptor_model.pkl"
             self.descriptor.save(str(descriptor_path))
 
+        elif self.descriptor_type == "fisher":
+            print("Using Fisher Vector descriptor")
+            from utils.FisherVectorExtractor import FisherVectorExtractor
+
+            unlabeled_images = self.config.load_unlabeled()
+            self.descriptor = FisherVectorExtractor(
+                n_gaussians=48,
+                pca_dim=42,
+                scales=5,
+                stride=8
+            )
+            self.descriptor.train(unlabeled_images, sample_size=10000)
+            descriptor_path = self.models_path / "descriptor_model.pkl"
+            self.descriptor.save(str(descriptor_path))
+
         print(
             f"Descriptor dimension: {self.descriptor.get_feature_dimension()}")
 
@@ -233,6 +248,12 @@ class STL10Pipeline:
         elif self.descriptor_type == "regional_multi":
             with open(descriptor_path, 'rb') as f:
                 descriptor = pickle.load(f)
+        elif self.descriptor_type == "fisher":
+            from utils.FisherVectorExtractor import FisherVectorExtractor
+            descriptor = FisherVectorExtractor.load(str(descriptor_path))
+        else:
+            raise ValueError(
+                f"Unknown descriptor type: {self.descriptor_type}")
 
         classifier = ModelEvaluator.load(str(classifier_path))
 
@@ -309,9 +330,9 @@ def main():
                         help='Path to store dataset')
     parser.add_argument('--models_path', type=str, default='./models',
                         help='Path to store models')
-    parser.add_argument('--descriptor', type=str, default='regional_multi',
-                        choices=['sift', 'hog', 'regional_multi'],
-                        help='Descriptor type: sift, hog, or regional_multi')
+    parser.add_argument('--descriptor', type=str, default='fisher',
+                        choices=['sift', 'hog', 'regional_multi', 'fisher'],
+                        help='Descriptor type')
     parser.add_argument('--n_clusters', type=int, default=1000,
                         help='Number of visual words (BoVW vocabulary size)')
     parser.add_argument('--index_type', type=str, default='flat_l2',
